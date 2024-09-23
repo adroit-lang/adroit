@@ -1,0 +1,5 @@
+.DS_Store
+/packages/vscode/bin/
+/packages/vscode/dist/
+/target/
+node_modules/

@@ -51,6 +51,7 @@ Windows, the binary filename will end with `.exe`):
 
 ```sh
 cargo build --release
+mkdir packages/vscode/bin
 cp target/release/adroit packages/vscode/bin/adroit
 npm run --workspace=adroit-vscode build
 ```

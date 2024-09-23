@@ -51,14 +51,14 @@ Windows, the binary filename will end with `.exe`):
 
 ```sh
 cargo build --release
-mkdir packages/vscode/bin
-cp target/release/adroit packages/vscode/bin/adroit
+mkdir packages/adroit-vscode/bin
+cp target/release/adroit packages/adroit-vscode/bin/adroit
 npm run --workspace=adroit-vscode build
 ```
 
 Then in the VS Code Explorer, right-click on the
-`packages/vscode/adroit-vscode-*.vsix` file that has been created, and click
-**Install Extension VSIX**.
+`packages/adroit-vscode/adroit-vscode-*.vsix` file that has been created, and
+click **Install Extension VSIX**.
 
 [git]: https://git-scm.com/downloads
 [github cli]: https://github.com/cli/cli#installation

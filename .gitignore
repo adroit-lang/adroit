@@ -1,6 +1,6 @@
 .DS_Store
 *.vsix
-/packages/vscode/bin/
-/packages/vscode/dist/
+/packages/adroit-vscode/bin/
+/packages/adroit-vscode/dist/
 /target/
 node_modules/

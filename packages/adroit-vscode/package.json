@@ -2,7 +2,7 @@
   "name": "adroit-vscode",
   "displayName": "Adroit",
   "version": "0.2.2",
-  "publisher": "samestep",
+  "publisher": "adroit-lang",
   "description": "Language services for Adroit.",
   "license": "MIT",
   "repository": {

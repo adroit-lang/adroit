@@ -1,17 +1,10 @@
-name: Build
+name: Release
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  release:
+    types:
+      - created
 
 jobs:
-  test:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - run: cargo test
-
   build:
     strategy:
       fail-fast: false
@@ -43,10 +36,9 @@ jobs:
       - run: ${{ matrix.install-script }}
       - run: rustup target add ${{ matrix.rust-target }}
       - run: cargo build --release --target ${{ matrix.rust-target }}
-      - uses: actions/upload-artifact@v4
+      - uses: softprops/action-gh-release@v2
         with:
-          name: adroit-${{ matrix.target }}
-          path: target/${{ matrix.target }}/release/adroit${{ matrix.ext }}
+          files: target/${{ matrix.rust-target }}/release/adroit${{ matrix.ext }}
       - run: npm ci
       - run: mkdir packages/adroit-vscode/bin
       - run: cp target/${{ matrix.rust-target }}/release/adroit${{ matrix.ext }} packages/adroit-vscode/bin/adroit${{ matrix.ext }}
@@ -76,4 +68,7 @@ jobs:
         with:
           name: adroit-darwin-arm64
           path: vsix
-      - run: ls vsix
+      - run: npm ci
+      - run: npx vsce publish --packagePath vsix/*
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}

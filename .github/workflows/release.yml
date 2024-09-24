@@ -36,9 +36,14 @@ jobs:
       - run: ${{ matrix.install-script }}
       - run: rustup target add ${{ matrix.rust-target }}
       - run: cargo build --release --target ${{ matrix.rust-target }}
-      - uses: softprops/action-gh-release@v2
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: target/${{ matrix.rust-target }}/release/adroit${{ matrix.ext }}
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: target/${{ matrix.rust-target }}/release/adroit${{ matrix.ext }}
+          asset_name: adroit-${{ matrix.rust-target }}${{ matrix.ext }}
+          asset_content_type: application/octet-stream
       - run: npm ci
       - run: mkdir packages/adroit-vscode/bin
       - run: cp target/${{ matrix.rust-target }}/release/adroit${{ matrix.ext }} packages/adroit-vscode/bin/adroit${{ matrix.ext }}

@@ -55,26 +55,3 @@ jobs:
         with:
           name: adroit-vscode-${{ matrix.vscode-platform }}
           path: packages/adroit-vscode/adroit-vscode-*.vsix
-
-  vscode:
-    needs: build
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: adroit-vscode-win32-x64
-          path: vsix
-      - uses: actions/download-artifact@v4
-        with:
-          name: adroit-vscode-linux-x64
-          path: vsix
-      - uses: actions/download-artifact@v4
-        with:
-          name: adroit-vscode-darwin-x64
-          path: vsix
-      - uses: actions/download-artifact@v4
-        with:
-          name: adroit-vscode-darwin-arm64
-          path: vsix
-      - run: ls vsix

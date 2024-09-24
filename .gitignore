@@ -3,4 +3,5 @@
 /packages/adroit-vscode/bin/
 /packages/adroit-vscode/dist/
 /target/
+/vsix/
 node_modules/

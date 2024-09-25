@@ -44,10 +44,11 @@ jobs:
           asset_path: target/${{ matrix.rust-target }}/release/adroit${{ matrix.ext }}
           asset_name: adroit-${{ matrix.rust-target }}${{ matrix.ext }}
           asset_content_type: application/octet-stream
-      - run: npm ci
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
       - run: mkdir packages/adroit-vscode/bin
       - run: cp target/${{ matrix.rust-target }}/release/adroit${{ matrix.ext }} packages/adroit-vscode/bin/adroit${{ matrix.ext }}
-      - run: npm run --workspace=adroit-vscode build -- --target ${{ matrix.vscode-platform }}
+      - run: bun run --filter=adroit-vscode build -- --target ${{ matrix.vscode-platform }}
       - uses: actions/upload-artifact@v4
         with:
           name: adroit-vscode-${{ matrix.vscode-platform }}
@@ -74,7 +75,8 @@ jobs:
         with:
           name: adroit-vscode-darwin-arm64
           path: vsix
-      - run: npm ci
-      - run: npx vsce publish --packagePath vsix/*
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bunx vsce publish --packagePath vsix/*
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}

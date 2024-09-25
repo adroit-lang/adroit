@@ -1,6 +1,6 @@
 import { JSX } from "preact";
 
-export const indexHtml = () => (
+export const indexHtml = ({ body }: { body: JSX.Element }) => (
   <html lang="en-us">
     <head>
       <meta charset="utf-8" />
@@ -8,12 +8,6 @@ export const indexHtml = () => (
       <link rel="stylesheet" href="/index.css" />
       <title>Adroit</title>
     </head>
-    <body>
-      <h1>Adroit</h1>
-      <p>
-        An experimental differentiable programming language.{" "}
-        <a href="https://github.com/adroit-lang/adroit">(GitHub)</a>
-      </p>
-    </body>
+    <body>{body}</body>
   </html>
 );

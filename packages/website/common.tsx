@@ -1,7 +1,8 @@
+import markdownit from "markdown-it";
 import * as fs from "node:fs/promises";
-import prettier from "prettier";
 import { JSX } from "preact";
 import { render } from "preact-render-to-string";
+import prettier from "prettier";
 import { indexHtml } from "./templates";
 
 const renderHtml = async (element: JSX.Element) =>
@@ -12,10 +13,25 @@ const renderHtml = async (element: JSX.Element) =>
 const out = "out";
 
 const generate = async () => {
+  const md = markdownit();
+
   for (const file of ["index.css"]) {
     await Bun.write(`${out}/${file}`, Bun.file(`src/${file}`));
   }
-  await Bun.write(`${out}/index.html`, await renderHtml(indexHtml()));
+  await Bun.write(
+    `${out}/index.html`,
+    await renderHtml(
+      indexHtml({
+        body: (
+          <div
+            dangerouslySetInnerHTML={{
+              __html: md.render(await Bun.file("src/index.md").text()),
+            }}
+          ></div>
+        ),
+      }),
+    ),
+  );
 };
 
 export const build = async () => {

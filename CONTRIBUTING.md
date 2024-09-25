@@ -35,6 +35,12 @@ Run this command to build and test the main Rust codebase:
 cargo test
 ```
 
+Run this command to make a release build and install it on your `PATH`:
+
+```sh
+cargo install --locked --path crates/adroit
+```
+
 ## JavaScript
 
 We use Bun for our [website][] and for our VS Code extension. To work with the

@@ -1,6 +1,6 @@
 # Adroit
 
-Adroit is an experimental differentiable programming language.
+An experimental differentiable programming language.
 
 ## Contributing
 

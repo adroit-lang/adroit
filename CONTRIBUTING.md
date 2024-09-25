@@ -6,7 +6,7 @@ Make sure to have these tools installed:
 
 - [Git][]
 - [Rust][]
-- [Node][]
+- [Bun][]
 
 Other tools that are optional but useful:
 
@@ -35,13 +35,27 @@ Run this command to build and test the main Rust codebase:
 cargo test
 ```
 
-## Node
+## JavaScript
 
-We use Node.js for our VS Code extension. To work with the Node packages in this
-repository, first install all dependencies from npm:
+We use Bun for our [website][] and for our VS Code extension. To work with the
+JavaScript packages in this repository, first install all dependencies from npm:
 
 ```sh
-npm install
+bun install
+```
+
+### Website
+
+To develop the website locally, run this command:
+
+```sh
+bun run --filter=@adroit-lang/website watch
+```
+
+Then in a separate terminal:
+
+```sh
+bun run --filter=@adroit-lang/website serve
 ```
 
 ### VS Code
@@ -53,14 +67,15 @@ Windows, the binary filename will end with `.exe`):
 cargo build --release
 mkdir packages/adroit-vscode/bin
 cp target/release/adroit packages/adroit-vscode/bin/adroit
-npm run --workspace=adroit-vscode build
+bun run --filter=adroit-vscode build
 ```
 
 Then in the VS Code Explorer, right-click on the
 `packages/adroit-vscode/adroit-vscode-*.vsix` file that has been created, and
 click **Install Extension VSIX**.
 
+[bun]: https://bun.sh/
 [git]: https://git-scm.com/downloads
 [github cli]: https://github.com/cli/cli#installation
-[node]: https://nodejs.org/en/download
 [rust]: https://www.rust-lang.org/tools/install
+[website]: https://adroit-lang.org

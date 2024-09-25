@@ -2,6 +2,8 @@
 
 An experimental differentiable programming language.
 
+See the website for more information: <https://adroit-lang.org>
+
 ## Contributing
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md).

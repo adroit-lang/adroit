@@ -23,3 +23,8 @@ url = "2"
 
 [dev-dependencies]
 goldenfile = "1.7.2"
+
+[build-dependencies]
+indexmap = { version = "2", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"

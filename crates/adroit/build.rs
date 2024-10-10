@@ -7,7 +7,13 @@ use std::{
 };
 
 use indexmap::IndexMap;
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
+
+fn flag<'de, D: Deserializer<'de>>(de: D) -> Result<bool, D::Error> {
+    type Unit = ();
+    Unit::deserialize(de)?;
+    Ok(true)
+}
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
@@ -44,6 +50,9 @@ enum Contents<'a> {
 
 #[derive(Debug, Deserialize)]
 struct Type<'a> {
+    #[serde(default, deserialize_with = "flag")]
+    optional: bool,
+
     #[serde(borrow)]
     name: Option<&'a str>,
 
@@ -122,13 +131,26 @@ impl<'a, W: Write> Writer<'a, W> {
             self.indent(indent)?;
             writeln!(self.w, "#[serde(rename = {name:?})]")?;
         }
+        if ty.optional {
+            self.indent(indent)?;
+            writeln!(
+                self.w,
+                "#[serde(skip_serializing_if = \"Option::is_none\")]"
+            )?;
+        }
         self.indent(indent)?;
         if public {
             write!(self.w, "pub ")?;
         }
         write!(self.w, "{}", rename.unwrap_or(name))?;
         write!(self.w, ": ")?;
+        if ty.optional {
+            write!(self.w, "Option<")?;
+        }
         self.ty(ty)?;
+        if ty.optional {
+            write!(self.w, ">")?;
+        }
         writeln!(self.w, ",")?;
         Ok(())
     }

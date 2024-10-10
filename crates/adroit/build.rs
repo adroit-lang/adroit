@@ -94,12 +94,12 @@ impl<'a, W: Write> Writer<'a, W> {
                 Contents::Uint { uint: () } => write!(self.w, "usize")?,
                 Contents::Int32 { int32: () } => write!(self.w, "i32")?,
                 Contents::Float64 { float64: () } => write!(self.w, "f64")?,
-                Contents::String { string: () } => write!(self.w, "String")?,
+                Contents::String { string: () } => write!(self.w, "Box<str>")?,
                 Contents::Type { name } => write!(self.w, "{name}")?,
                 Contents::List { element } => {
-                    write!(self.w, "Vec<")?;
+                    write!(self.w, "Box<[")?;
                     self.ty(element)?;
-                    write!(self.w, ">")?;
+                    write!(self.w, "]>")?;
                 }
                 Contents::Record { fields: _ } | Contents::Enum { variants: _ } => {
                     let name = ty.name.unwrap();
@@ -173,9 +173,9 @@ impl<'a, W: Write> Writer<'a, W> {
                 }
                 Contents::Type { name: _ } => unimplemented!(),
                 Contents::List { element } => {
-                    write!(self.w, "pub type {name} = Vec<")?;
+                    write!(self.w, "pub type {name} = Box<[")?;
                     self.ty(element)?;
-                    writeln!(self.w, ">;")?;
+                    writeln!(self.w, "]>;")?;
                 }
                 Contents::Record { fields } => {
                     writeln!(self.w, "#[derive(Serialize)]")?;

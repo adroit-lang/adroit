@@ -167,8 +167,7 @@ impl<'a, W: Write> Writer<'a, W> {
                 | Contents::Float64 { float64: () }
                 | Contents::String { string: () } => {
                     writeln!(self.w, "#[derive(Serialize)]")?;
-                    writeln!(self.w, "#[serde(transparent)]")?;
-                    write!(self.w, "pub struct {name}(")?;
+                    write!(self.w, "pub struct {name}(pub ")?;
                     self.ty(ty)?;
                     writeln!(self.w, ");")?;
                 }

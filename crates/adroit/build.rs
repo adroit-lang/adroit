@@ -66,12 +66,17 @@ struct Writer<'a, W> {
 }
 
 impl<'a, W: Write> Writer<'a, W> {
+    fn indent(&mut self, indent: usize) -> io::Result<()> {
+        for _ in 0..indent {
+            write!(self.w, "    ")?;
+        }
+        Ok(())
+    }
+
     fn doc_comment(&mut self, indent: usize, doc: &'a Option<String>) -> io::Result<()> {
         if let Some(string) = doc {
             for line in string.lines() {
-                for _ in 0..indent {
-                    write!(self.w, "    ")?;
-                }
+                self.indent(indent)?;
                 if line.is_empty() {
                     writeln!(self.w, "///")?;
                 } else {
@@ -108,17 +113,20 @@ impl<'a, W: Write> Writer<'a, W> {
 
     fn field(&mut self, indent: usize, public: bool, name: &str, ty: &'a Type) -> io::Result<()> {
         self.doc_comment(indent, &ty.doc)?;
-        for _ in 0..indent {
-            write!(self.w, "    ")?;
+        let rename = match name {
+            "return" => Some("ret"),
+            "type" => Some("ty"),
+            _ => None,
+        };
+        if rename.is_some() {
+            self.indent(indent)?;
+            writeln!(self.w, "#[serde(rename = {name:?})]")?;
         }
+        self.indent(indent)?;
         if public {
             write!(self.w, "pub ")?;
         }
-        match name {
-            "return" => write!(self.w, "ret")?,
-            "type" => write!(self.w, "ty")?,
-            _ => write!(self.w, "{name}")?,
-        }
+        write!(self.w, "{}", rename.unwrap_or(name))?;
         write!(self.w, ": ")?;
         self.ty(ty)?;
         writeln!(self.w, ",")?;
@@ -158,6 +166,8 @@ impl<'a, W: Write> Writer<'a, W> {
                 | Contents::Int32 { int32: () }
                 | Contents::Float64 { float64: () }
                 | Contents::String { string: () } => {
+                    writeln!(self.w, "#[derive(Serialize)]")?;
+                    writeln!(self.w, "#[serde(transparent)]")?;
                     write!(self.w, "pub struct {name}(")?;
                     self.ty(ty)?;
                     writeln!(self.w, ");")?;
@@ -169,6 +179,7 @@ impl<'a, W: Write> Writer<'a, W> {
                     writeln!(self.w, ">;")?;
                 }
                 Contents::Record { fields } => {
+                    writeln!(self.w, "#[derive(Serialize)]")?;
                     writeln!(self.w, "pub struct {name} {{")?;
                     let mut first = true;
                     for (name, ty) in fields {
@@ -181,6 +192,8 @@ impl<'a, W: Write> Writer<'a, W> {
                     writeln!(self.w, "}}")?;
                 }
                 Contents::Enum { variants } => {
+                    writeln!(self.w, "#[derive(Serialize)]")?;
+                    writeln!(self.w, "#[serde(tag = \"kind\")]")?;
                     writeln!(self.w, "pub enum {name} {{")?;
                     let mut first = true;
                     for (name, ty) in variants {
@@ -198,6 +211,8 @@ impl<'a, W: Write> Writer<'a, W> {
     }
 
     fn all(&mut self) -> io::Result<()> {
+        writeln!(self.w, "use serde::Serialize;").unwrap();
+        writeln!(self.w)?;
         let mut first = true;
         loop {
             let types = take(&mut self.types);

@@ -1,29 +1,31 @@
-def array[N, T]: []T -> [N]T = undefined
+import "trait" use Dim
 
-def concat[M, N, T]: [M]T * [N]T -> [M + N]T = undefined
+def array[N: Dim, T](a: []T): [N]T = undefined
 
-def for[N, T]: (N -> T) -> [N]T = undefined
+def concat[M: Dim, N: Dim, T](a: [M]T, b: [N]T): [M + N]T = undefined
 
-def map[N, T, U]: [N]T * (T -> U) -> [N]U = undefined
+def for[N: Dim, T, F: N -> T](f: F): [N]T = undefined
 
-def max[N]: [N]Float -> Float = undefined
+def map[N: Dim, T, U, F: T -> U](a: [N]T, f: F): [N]U = undefined
 
-def matrix[M, N, T]: [][]T -> [M * N]T = undefined
+def max[N: Dim](a: [N]Float): Float = undefined
 
-def range: Int -> []Int = undefined
+def matrix[M: Dim, N: Dim, T](a: [][]T): [M * N]T = undefined
 
-def reshape[M, N, T]: [N]T -> [M]T = undefined
+def range(n: Int): []Int = undefined
 
-def row[M, N, T]: [M * N]T * M -> [N]T = undefined
+def reshape[M: Dim, N: Dim, T](a: [N]T): [M]T = undefined
 
-def scan[T, U]: T * []U * (T * U -> T) -> []T = undefined
+def row[M: Dim, N: Dim, T](a: [M * N]T, i: M): [N]T = undefined
 
-def slice[T]: []T * Int * Int -> []T = undefined
+def scan[T, U, F: T * U -> T](x: T, a: []U, f: F): []T = undefined
 
-def stack[M, N, T]: [M][N]T -> [M * N]T = undefined
+def slice[T](a: []T, i: Int, j: Int): []T = undefined
 
-def sum[N]: [N]Float -> Float = undefined
+def stack[M: Dim, N: Dim, T](a: [M][N]T): [M * N]T = undefined
 
-def transpose[M, N, T]: [M * N]T -> [N * M]T = undefined
+def sum[N: Dim](a: [N]Float): Float = undefined
 
-def zeros[N]: () -> [N]Float = undefined
+def transpose[M: Dim, N: Dim, T](a: [M * N]T): [N * M]T = undefined
+
+def zeros[N: Dim](): [N]Float = undefined

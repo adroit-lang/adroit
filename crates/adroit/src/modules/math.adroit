@@ -1,15 +1,17 @@
-def exp: Float -> Float = undefined
+import "trait" use Dim
 
-def float: Int -> Float = undefined
+def exp(x: Float): Float = undefined
 
-def int[N]: () -> Int = undefined
+def float(n: Int): Float = undefined
 
-def lgamma: Float -> Float = undefined
+def int[N: Dim](): Int = undefined
 
-def log: Float -> Float = undefined
+def lgamma(x: Float): Float = undefined
+
+def log(x: Float): Float = undefined
 
 def pi: Float = undefined
 
 def sqr(x: Float): Float = x * x
 
-def sqrt: Float -> Float = undefined
+def sqrt(x: Float): Float = undefined

@@ -188,7 +188,7 @@ impl<'a, W: Write> Writer<'a, W> {
                 | Contents::Int32 { int32: () }
                 | Contents::Float64 { float64: () }
                 | Contents::String { string: () } => {
-                    writeln!(self.w, "#[derive(Serialize)]")?;
+                    writeln!(self.w, "#[derive(Debug, Eq, Hash, PartialEq, Serialize)]")?;
                     write!(self.w, "pub struct {name}(pub ")?;
                     self.ty(ty)?;
                     writeln!(self.w, ");")?;
@@ -200,7 +200,7 @@ impl<'a, W: Write> Writer<'a, W> {
                     writeln!(self.w, "]>;")?;
                 }
                 Contents::Record { fields } => {
-                    writeln!(self.w, "#[derive(Serialize)]")?;
+                    writeln!(self.w, "#[derive(Debug, Serialize)]")?;
                     writeln!(self.w, "pub struct {name} {{")?;
                     let mut first = true;
                     for (name, ty) in fields {
@@ -213,7 +213,7 @@ impl<'a, W: Write> Writer<'a, W> {
                     writeln!(self.w, "}}")?;
                 }
                 Contents::Enum { variants } => {
-                    writeln!(self.w, "#[derive(Serialize)]")?;
+                    writeln!(self.w, "#[derive(Debug, Serialize)]")?;
                     writeln!(self.w, "#[serde(tag = \"kind\")]")?;
                     writeln!(self.w, "pub enum {name} {{")?;
                     let mut first = true;

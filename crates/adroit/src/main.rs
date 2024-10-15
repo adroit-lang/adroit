@@ -4,6 +4,7 @@ mod fetch;
 mod graph;
 mod ir;
 mod lex;
+mod lower;
 mod lsp;
 mod parse;
 mod pprint;

@@ -6,8 +6,14 @@ on:
       - main
 
 jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo clippy -- -Dwarnings
+
   test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - run: cargo test
@@ -19,12 +25,12 @@ jobs:
         include:
           - vscode-platform: win32-x64
             rust-target: x86_64-pc-windows-gnu
-            github-os: ubuntu-22.04
+            github-os: ubuntu-24.04
             ext: ".exe"
             install-script: sudo apt-get install -y mingw-w64
           - vscode-platform: linux-x64
             rust-target: x86_64-unknown-linux-musl
-            github-os: ubuntu-22.04
+            github-os: ubuntu-24.04
             ext: ""
             install-script: ""
           - vscode-platform: darwin-x64
@@ -58,7 +64,7 @@ jobs:
           path: packages/adroit-vscode/adroit-vscode-*.vsix
 
   site:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -77,7 +83,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - id: deploy
         uses: actions/deploy-pages@v4

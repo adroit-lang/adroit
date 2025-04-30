@@ -28,7 +28,7 @@
               bun
               nixfmt-rfc-style
 
-              (fenix.packages.${system}.latest.toolchain)
+              (fenix.packages.${system}.stable.toolchain)
             ];
           };
       }

@@ -332,7 +332,7 @@ struct Parser<'a> {
     tree: Module,
 }
 
-impl<'a> Parser<'a> {
+impl Parser<'_> {
     fn get(&self, id: TokenId) -> TokenKind {
         self.tokens.get(id).kind
     }

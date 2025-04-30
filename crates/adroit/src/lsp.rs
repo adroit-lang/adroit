@@ -97,7 +97,7 @@ struct LspDiagnostic<'a, 'b> {
     related: Vec<DiagnosticRelatedInformation>,
 }
 
-impl<'a, 'b> util::Diagnostic<(&'a str, Range<usize>)> for LspDiagnostic<'a, 'b> {
+impl<'a> util::Diagnostic<(&'a str, Range<usize>)> for LspDiagnostic<'a, '_> {
     fn related(mut self, (path, range): (&'a str, Range<usize>), message: impl ToString) -> Self {
         assert_eq!(path, self.emitter.path);
         self.related.push(DiagnosticRelatedInformation {

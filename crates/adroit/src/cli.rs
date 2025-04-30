@@ -77,8 +77,8 @@ struct AriadneDiagnostic<'a, 'b, C: Cache<&'a str>> {
     builder: ReportBuilder<'a, (&'a str, Range<usize>)>,
 }
 
-impl<'a, 'b, C: Cache<&'a str>> Diagnostic<(&'a str, Range<usize>)>
-    for AriadneDiagnostic<'a, 'b, C>
+impl<'a, C: Cache<&'a str>> Diagnostic<(&'a str, Range<usize>)>
+    for AriadneDiagnostic<'a, '_, C>
 {
     fn related(mut self, span: (&'a str, Range<usize>), message: impl ToString) -> Self {
         self.builder.add_label(

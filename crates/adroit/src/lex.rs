@@ -267,7 +267,7 @@ impl LexError {
 
     pub fn message(&self) -> &str {
         match self {
-            LexError::SourceTooLong { .. } => "file size exceeds 4 GiB limit",
+            LexError::SourceTooLong => "file size exceeds 4 GiB limit",
             LexError::TokenTooLong { .. } => "token size exceeds 64 KiB limit",
             LexError::InvalidToken { .. } => "invalid token",
         }

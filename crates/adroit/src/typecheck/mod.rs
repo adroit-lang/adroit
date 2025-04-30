@@ -1458,7 +1458,7 @@ mod tests {
         emitter: &'b mut LineEmitter<'a>,
     }
 
-    impl<'a, 'b> Diagnostic<(&'a str, Range<usize>)> for LineDiagnostic<'a, 'b> {
+    impl<'a> Diagnostic<(&'a str, Range<usize>)> for LineDiagnostic<'a, '_> {
         fn related(self, span: (&'a str, Range<usize>), message: impl ToString) -> Self {
             self.emitter.emit(span, message);
             self

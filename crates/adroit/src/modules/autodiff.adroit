@@ -1,1 +1,6 @@
-def grad: (Float -> Float) -> (Float -> Float) = undefined
+import "trait" use Dim
+
+def deriv[F: Float -> Float](f: F): impl Float -> Float = undefined
+
+def grad[N: Dim, F: [N]Float -> Float](f: F): impl [N]Float -> [N]Float =
+  undefined

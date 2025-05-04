@@ -1,0 +1,47 @@
+import "int" use divmod
+
+#| Types that can be applied using function application syntax.
+trait Function[Dom] {
+  #| The type of the function's codomain.
+  type Cod
+
+  #| Apply the function to an argument.
+  def apply(f: Self, x: Dom): Cod
+}
+
+#| Types that can be used as the index type for an array.
+trait Dim {
+  #| The number of elements in this index type.
+  def size(): Int
+
+  #| Flatten an index value to an integer.
+  def ser(i: Self): Int
+
+  #| Unflatten an integer to an index value.
+  def de(n: Int): Self
+}
+
+impl[A: Dim, B: Dim] Dim for A * B {
+  def size(): Int = A::size() * B::size()
+
+  def ser(i: A, j: B): Int = A::ser(i) * B::size() + B::ser(j)
+
+  def de(n: Int): A * B =
+    let i, j = divmod(n, B::size())
+    A::de(i), B::de(j)
+}
+
+impl[A: Dim, B: Dim] Dim for A + B {
+  def size(): Int = A::size() + B::size()
+
+  def ser(i: A + B): Int =
+    match i
+      case inl(i) => A::ser(i)
+      case inr(j) => A::size() + B::ser(j)
+
+  def de(n: Int): A + B =
+    let left = A::size()
+    if n < left
+      then inl(A::de(n))
+      else inr(B::de(n - left))
+}

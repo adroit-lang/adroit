@@ -1,4 +1,7 @@
-use std::{collections::HashMap, io, marker::PhantomData, ops::Range, path::PathBuf, sync::Arc};
+use std::{
+    collections::HashMap, fs, io, marker::PhantomData, ops::Range, path::PathBuf, sync::Arc,
+    time::Instant,
+};
 
 use ariadne::{Cache, Color, Label, Report, ReportBuilder, ReportKind, Source};
 use clap::{Parser, Subcommand};
@@ -9,7 +12,7 @@ use crate::{
     compile::{FullModule, GraphImporter, Printer},
     fetch::fetch,
     graph::{Analysis, Data, Graph, Syntax, Uri},
-    lex::Tokens,
+    lex::{lex, Tokens},
     lsp::language_server,
     parse::{self, ParseError},
     pprint::pprint,
@@ -197,6 +200,14 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Commands {
+    /// Lex a source file
+    Lex {
+        /// Number of times to lex
+        #[arg(short)]
+        n: usize,
+        file: PathBuf,
+    },
+
     /// Print the reformatted source code of a module
     Fmt { file: PathBuf },
 
@@ -209,6 +220,33 @@ enum Commands {
 
 pub fn cli() -> Result<(), ()> {
     match Cli::parse().command {
+        Commands::Lex { n, file } => {
+            let source = fs::read_to_string(&file).map_err(|err| {
+                eprintln!("error reading {}: {err}", file.display());
+            })?;
+            let bytes = source.len();
+            println!("{n} iterations");
+            println!("{n} * {bytes} = {} bytes", n * bytes);
+            let lines = source.lines().count();
+            println!("{n} * {lines} = {} lines", n * lines);
+            let tokens = lex(&source).map_err(|_| eprintln!("failed to lex"))?.len();
+            println!("{n} * {tokens} = {} tokens", n * tokens);
+            let start = Instant::now();
+            for _ in 0..n {
+                lex(&source).unwrap();
+            }
+            let end = Instant::now();
+            let elapsed = end - start;
+            println!("{elapsed:?}");
+            println!("{:?} per byte", elapsed / (n * bytes) as u32);
+            println!("{:?} per line", elapsed / (n * lines) as u32);
+            println!("{:?} per token", elapsed / (n * tokens) as u32);
+            let seconds = elapsed.as_secs_f64();
+            println!("{} bytes per second", (n * bytes) as f64 / seconds);
+            println!("{} lines per second", (n * lines) as f64 / seconds);
+            println!("{} tokens per second", (n * tokens) as f64 / seconds);
+            Ok(())
+        }
         Commands::Fmt { file } => {
             let (mut graph, _) = rooted_graph(file)?;
             let (uri,) = graph.pending().into_iter().collect_tuple().unwrap();

@@ -1,211 +1,152 @@
-use std::string;
-
 use enumset::EnumSet;
-use serde::Serialize;
+use index_vec::{IndexVec, define_index_type};
 
-use crate::{
-    lex::{
-        Token, TokenId,
-        TokenKind::{self, *},
-        Tokens,
-    },
-    util::{u32_to_usize, Id},
+use crate::lex::{
+    TokenId,
+    TokenKind::{self, *},
+    Tokens,
 };
 
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
-#[serde(transparent)]
-pub struct TypeId {
-    pub index: u32,
+define_index_type! {
+    pub struct TypeId = u32;
 }
 
-impl Id for TypeId {
-    fn from_usize(n: usize) -> Option<Self> {
-        match n.try_into() {
-            Ok(index) => Some(Self { index }),
-            Err(_) => None,
-        }
-    }
-
-    fn to_usize(self) -> usize {
-        u32_to_usize(self.index)
-    }
+define_index_type! {
+    pub struct ParamId = u32;
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
-#[serde(transparent)]
-pub struct ParamId {
-    pub index: u32,
+define_index_type! {
+    pub struct StmtId = u32;
 }
 
-impl Id for ParamId {
-    fn from_usize(n: usize) -> Option<Self> {
-        match n.try_into() {
-            Ok(index) => Some(Self { index }),
-            Err(_) => None,
-        }
-    }
-
-    fn to_usize(self) -> usize {
-        u32_to_usize(self.index)
-    }
+define_index_type! {
+    pub struct ExprId = u32;
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
-#[serde(transparent)]
-pub struct ExprId {
-    pub index: u32,
+define_index_type! {
+    pub struct ArgId = u32;
 }
 
-impl Id for ExprId {
-    fn from_usize(n: usize) -> Option<Self> {
-        match n.try_into() {
-            Ok(index) => Some(Self { index }),
-            Err(_) => None,
-        }
-    }
+define_index_type! {
+    pub struct ImportId = u16;
+}
 
-    fn to_usize(self) -> usize {
-        u32_to_usize(self.index)
+define_index_type! {
+    pub struct FuncId = u16;
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct IdRange<T> {
+    start: T,
+    end: T,
+}
+
+impl<T> IdRange<T> {
+    fn new(start: T, end: T) -> Self {
+        Self { start, end }
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
-#[serde(transparent)]
-pub struct DefId {
-    pub index: u32,
-}
-
-impl Id for DefId {
-    fn from_usize(n: usize) -> Option<Self> {
-        match n.try_into() {
-            Ok(index) => Some(Self { index }),
-            Err(_) => None,
-        }
-    }
-
-    fn to_usize(self) -> usize {
-        u32_to_usize(self.index)
-    }
-}
-
-#[derive(Clone, Copy, Debug, Serialize)]
-#[serde(tag = "kind")]
+#[derive(Clone, Copy, Debug)]
 pub enum Type {
-    Paren { inner: TypeId },
-    Unit { open: TokenId, close: TokenId },
-    Name { name: TokenId },
-    Prod { fst: TypeId, snd: TypeId },
-    Sum { left: TypeId, right: TypeId },
-    Array { index: Option<TypeId>, elem: TypeId },
-    Func { dom: TypeId, cod: TypeId },
+    Name(TokenId),
+    Vector(TypeId),
+    Matrix(TypeId),
 }
 
-#[derive(Clone, Copy, Debug, Serialize)]
-#[serde(tag = "kind")]
-pub enum Bind {
-    Paren {
-        inner: ParamId,
-    },
-    Unit {
-        open: TokenId,
-        close: TokenId,
-    },
-    Name {
-        name: TokenId,
-    },
-    Pair {
-        fst: ParamId,
-        snd: ParamId,
-    },
-    Record {
-        name: TokenId,
-        field: ParamId,
-        rest: ParamId,
-    },
-    End {
-        open: TokenId,
-        close: TokenId,
-    },
-}
-
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug)]
 pub struct Param {
-    pub bind: Bind,
-    pub ty: Option<TypeId>,
+    pub name: TokenId,
+    pub ty: TypeId,
 }
 
-#[derive(Clone, Copy, Debug, Serialize)]
-pub enum Unop {
-    Neg,
-}
-
-#[derive(Clone, Copy, Debug, Serialize)]
-pub enum Binop {
-    Add,
-    Sub,
-    Mul,
-    Div,
-    ElemMul,
-    ElemDiv,
-}
-
-#[derive(Clone, Copy, Debug, Serialize)]
-#[serde(tag = "kind")]
-pub enum Expr {
-    Paren {
-        inner: ExprId,
-    },
-    Name {
-        name: TokenId,
-    },
-    Undefined {
-        token: TokenId,
-    },
-    Unit {
-        open: TokenId,
-        close: TokenId,
-    },
-    Number {
-        val: TokenId,
-    },
-    Pair {
-        fst: ExprId,
-        snd: ExprId,
-    },
-    Record {
-        name: TokenId,
-        field: ExprId,
-        rest: ExprId,
-    },
-    End {
-        open: TokenId,
-        close: TokenId,
-    },
-    Elem {
-        array: ExprId,
+#[derive(Clone, Copy, Debug)]
+pub enum Lhs {
+    Name(TokenId),
+    Vector {
+        vec: ExprId,
         index: ExprId,
     },
-    Inst {
-        val: ExprId,
-        ty: TypeId,
+    Matrix {
+        mat: ExprId,
+        row: ExprId,
+        col: ExprId,
     },
-    Apply {
-        func: ExprId,
-        arg: ExprId,
-    },
-    Map {
-        func: ExprId,
-        arg: ExprId,
-    },
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum SetKind {
+    Set,
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum Stmt {
     Let {
-        param: ParamId,
-        val: ExprId,
-        body: ExprId,
-    },
-    Index {
         name: TokenId,
-        val: ExprId,
-        body: ExprId,
+        rhs: ExprId,
+    },
+    Var {
+        name: TokenId,
+        rhs: ExprId,
+    },
+    For {
+        name: TokenId,
+        start: ExprId,
+        end: ExprId,
+        body: IdRange<StmtId>,
+    },
+    Set {
+        lhs: Lhs,
+        kind: SetKind,
+        rhs: ExprId,
+    },
+    Expr(ExprId),
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum Unop {
+    Negative,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum Binop {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum Expr {
+    Paren(ExprId),
+    Name(TokenId),
+    Int(TokenId),
+    Float(TokenId),
+    New {
+        ty: TypeId,
+        args: IdRange<ArgId>,
+    },
+    Vector {
+        vec: ExprId,
+        index: ExprId,
+    },
+    Matrix {
+        mat: ExprId,
+        row: ExprId,
+        col: ExprId,
+    },
+    Function {
+        name: TokenId,
+        args: IdRange<ArgId>,
+    },
+    Method {
+        obj: ExprId,
+        name: TokenId,
+        args: IdRange<ArgId>,
     },
     Unary {
         op: Unop,
@@ -216,92 +157,58 @@ pub enum Expr {
         op: Binop,
         rhs: ExprId,
     },
-    Lambda {
-        param: ParamId,
-        ty: Option<TypeId>,
-        body: ExprId,
-    },
 }
 
-#[derive(Debug, Serialize)]
-pub struct Import {
-    pub module: TokenId,
-    pub names: Vec<TokenId>,
+#[derive(Clone, Copy, Debug)]
+pub struct Arg {
+    pub name: Option<TokenId>,
+    pub expr: ExprId,
 }
 
-#[derive(Debug, Serialize)]
-pub struct Def {
+#[derive(Clone, Copy, Debug)]
+pub struct Signature {
     pub name: TokenId,
-    pub types: Vec<TokenId>,
-    pub params: Vec<ParamId>,
-    pub ty: Option<TypeId>,
-    pub body: ExprId,
+    pub params: IdRange<ParamId>,
+    pub ret: TypeId,
 }
 
-#[derive(Debug, Serialize)]
-pub struct Module {
-    imports: Vec<Import>,
-    types: Vec<Type>,
-    params: Vec<Param>,
-    exprs: Vec<Expr>,
-    defs: Vec<Def>,
+#[derive(Clone, Copy, Debug)]
+pub struct Function {
+    pub sig: Signature,
+    pub body: IdRange<StmtId>,
+    pub ret: Option<ExprId>,
 }
 
-impl Module {
-    fn make_ty(&mut self, ty: Type) -> TypeId {
-        let id = TypeId::from_usize(self.types.len()).expect("tokens should outnumber types");
-        self.types.push(ty);
-        id
+#[derive(Debug, Default)]
+pub struct Tree {
+    pub types: IndexVec<TypeId, Type>,
+    pub params: IndexVec<ParamId, Param>,
+    pub stmts: IndexVec<StmtId, Stmt>,
+    pub exprs: IndexVec<ExprId, Expr>,
+    pub args: IndexVec<ArgId, Arg>,
+    pub imports: IndexVec<ImportId, Signature>,
+    pub funcs: IndexVec<FuncId, Function>,
+}
+
+impl Tree {
+    pub fn params(&self, range: IdRange<ParamId>) -> &[Param] {
+        &self.params[range.start..range.end].raw
     }
 
-    fn make_param(&mut self, param: Param) -> ParamId {
-        let id =
-            ParamId::from_usize(self.params.len()).expect("tokens should outnumber parameters");
-        self.params.push(param);
-        id
+    pub fn stmts(&self, range: IdRange<StmtId>) -> &[Stmt] {
+        &self.stmts[range.start..range.end].raw
     }
 
-    fn make_expr(&mut self, expr: Expr) -> ExprId {
-        let id = ExprId::from_usize(self.exprs.len()).expect("tokens should outnumber expressions");
-        self.exprs.push(expr);
-        id
+    pub fn args(&self, range: IdRange<ArgId>) -> &[Arg] {
+        &self.args[range.start..range.end].raw
     }
+}
 
-    pub fn ty(&self, id: TypeId) -> Type {
-        self.types[id.to_usize()]
-    }
-
-    pub fn param(&self, id: ParamId) -> Param {
-        self.params[id.to_usize()]
-    }
-
-    pub fn expr(&self, id: ExprId) -> Expr {
-        self.exprs[id.to_usize()]
-    }
-
-    pub fn def(&self, id: DefId) -> &Def {
-        &self.defs[id.to_usize()]
-    }
-
-    pub fn imports(&self) -> &[Import] {
-        &self.imports
-    }
-
-    pub fn types(&self) -> &[Type] {
-        &self.types
-    }
-
-    pub fn params(&self) -> &[Param] {
-        &self.params
-    }
-
-    pub fn exprs(&self) -> &[Expr] {
-        &self.exprs
-    }
-
-    pub fn defs(&self) -> &[Def] {
-        &self.defs
-    }
+#[derive(Debug)]
+struct Block {
+    /// The `StmtId` here is fake, be warned!
+    stmts: IndexVec<StmtId, Stmt>,
+    expr: Option<Expr>,
 }
 
 #[derive(Debug)]
@@ -313,7 +220,7 @@ pub enum ParseError {
 }
 
 impl ParseError {
-    pub fn message(&self) -> string::String {
+    pub fn message(&self) -> String {
         match self {
             ParseError::Expected { id: _, kinds } => format!(
                 "expected {}",
@@ -323,633 +230,378 @@ impl ParseError {
     }
 }
 
+type ParseResult<T> = Result<T, ParseError>;
+
 #[derive(Debug)]
 struct Parser<'a> {
     tokens: &'a Tokens,
-    brackets: Vec<TokenId>,
-    before_ws: TokenId,
     id: TokenId,
-    tree: Module,
+    tree: Tree,
 }
 
 impl Parser<'_> {
     fn get(&self, id: TokenId) -> TokenKind {
-        self.tokens.get(id).kind
+        self.tokens[id].kind
     }
 
     fn peek(&self) -> TokenKind {
         self.get(self.id)
     }
 
-    fn non_ws(&self, mut id: TokenId) -> TokenId {
-        while self.get(id).ignore() {
-            id.index += 1;
-        }
-        id
-    }
-
-    fn find_non_ws(&mut self) {
-        self.id = self.non_ws(self.id);
-    }
-
-    fn next(&mut self) {
+    fn next(&mut self) -> TokenId {
         if let Eof = self.peek() {
             panic!("unexpected end of file");
         }
-        self.before_ws = TokenId {
-            index: self.id.index + 1,
-        };
-        self.id = self.before_ws;
-        self.find_non_ws();
+        let id = self.id;
+        self.id += 1;
+        id
     }
 
-    fn expect(&mut self, kind: TokenKind) -> Result<TokenId, ParseError> {
+    fn err(&self, kinds: EnumSet<TokenKind>) -> ParseError {
+        ParseError::Expected { id: self.id, kinds }
+    }
+
+    fn expect(&mut self, kind: TokenKind) -> ParseResult<TokenId> {
         let id = self.id;
         if self.peek() == kind {
             self.next();
             Ok(id)
         } else {
-            Err(ParseError::Expected {
-                id,
-                kinds: EnumSet::only(kind),
-            })
+            Err(self.err(EnumSet::only(kind)))
         }
     }
 
-    fn newline(&self) -> bool {
-        // we only allow single-line comments, so anything ignored must include a newline
-        self.before_ws < self.id
-    }
-
-    fn after_close(&self) -> TokenId {
-        let mut after = self.brackets[self.id.to_usize()];
-        assert!(after.index > self.id.index);
-        after.index += 1; // this function does not automatically ignore whitespace
-        after
-    }
-
-    fn ty_atom(&mut self) -> Result<TypeId, ParseError> {
+    fn ty(&mut self) -> ParseResult<Type> {
         match self.peek() {
-            Ident => {
-                let name = self.id;
-                self.next();
-                Ok(self.tree.make_ty(Type::Name { name }))
-            }
-            LParen => {
-                let open = self.id;
-                self.next();
-                if let RParen = self.peek() {
-                    let close = self.id;
-                    self.next();
-                    Ok(self.tree.make_ty(Type::Unit { open, close }))
-                } else {
-                    let inner = self.ty()?;
-                    self.expect(RParen)?;
-                    Ok(self.tree.make_ty(Type::Paren { inner }))
-                }
-            }
-            _ => Err(ParseError::Expected {
-                id: self.id,
-                kinds: Ident | LParen,
-            }),
-        }
-    }
-
-    fn ty_factor(&mut self) -> Result<TypeId, ParseError> {
-        match self.peek() {
+            Ident => Ok(Type::Name(self.next())),
             LBracket => {
                 self.next();
-                let index = match self.peek() {
-                    RBracket => None,
-                    _ => Some(self.ty()?),
-                };
-                self.expect(RBracket)?;
-                let elem = self.ty_factor()?;
-                Ok(self.tree.make_ty(Type::Array { index, elem }))
-            }
-            _ => self.ty_atom(),
-        }
-    }
-
-    fn ty_term(&mut self) -> Result<TypeId, ParseError> {
-        let mut types = vec![self.ty_factor()?];
-        while let Star = self.peek() {
-            self.next();
-            types.push(self.ty_factor()?);
-        }
-        let last = types
-            .pop()
-            .expect("every type term should have at least one factor");
-        Ok(types
-            .into_iter()
-            .rfold(last, |snd, fst| self.tree.make_ty(Type::Prod { fst, snd })))
-    }
-
-    fn ty_dom(&mut self) -> Result<TypeId, ParseError> {
-        let mut types = vec![self.ty_term()?];
-        while let Plus = self.peek() {
-            self.next();
-            types.push(self.ty_term()?);
-        }
-        let last = types
-            .pop()
-            .expect("every domain type should have at least one term");
-        Ok(types.into_iter().rfold(last, |right, left| {
-            self.tree.make_ty(Type::Sum { left, right })
-        }))
-    }
-
-    fn ty(&mut self) -> Result<TypeId, ParseError> {
-        let mut types = vec![self.ty_dom()?];
-        while let To = self.peek() {
-            self.next();
-            types.push(self.ty_dom()?);
-        }
-        let last = types
-            .pop()
-            .expect("every type should have at least one domain");
-        Ok(types
-            .into_iter()
-            .rfold(last, |cod, dom| self.tree.make_ty(Type::Func { cod, dom })))
-    }
-
-    fn bind_atom(&mut self) -> Result<Bind, ParseError> {
-        match self.peek() {
-            Ident => {
-                let name = self.id;
-                self.next();
-                Ok(Bind::Name { name })
-            }
-            LParen => {
-                let open = self.id;
-                self.next();
-                if let RParen = self.peek() {
-                    let close = self.id;
-                    self.next();
-                    Ok(Bind::Unit { open, close })
-                } else {
-                    let inner = self.param()?;
-                    self.expect(RParen)?;
-                    Ok(Bind::Paren { inner })
-                }
-            }
-            LBrace => {
-                let open = self.id;
-                self.next();
-                let mut fields = vec![];
-                while let Ident = self.peek() {
-                    let name = self.id;
-                    self.next();
-                    let bind = if let Equal = self.peek() {
+                match self.peek() {
+                    LBracket => {
                         self.next();
-                        self.bind_elem()?
-                    } else {
-                        Bind::Name { name }
-                    };
-                    let ty = if let Colon = self.peek() {
-                        self.next();
-                        Some(self.ty()?)
-                    } else {
-                        None
-                    };
-                    fields.push((name, self.tree.make_param(Param { bind, ty })));
-                    match self.peek() {
-                        Comma => self.next(),
-                        _ => break,
+                        self.expect(RBracket)?;
+                        self.expect(RBracket)?;
+                        Ok(Type::Matrix(self.ty_id()?))
                     }
+                    RBracket => {
+                        self.next();
+                        Ok(Type::Vector(self.ty_id()?))
+                    }
+                    _ => Err(self.err(LBracket | RBracket)),
                 }
-                let close = self.expect(RBrace)?;
-                Ok(fields
-                    .into_iter()
-                    .rfold(Bind::End { open, close }, |bind, (name, field)| {
-                        Bind::Record {
-                            name,
-                            field,
-                            rest: self.tree.make_param(Param { bind, ty: None }),
-                        }
-                    }))
             }
-            _ => Err(ParseError::Expected {
-                id: self.id,
-                kinds: Ident | LParen,
-            }),
+            _ => Err(self.err(Ident | LBracket)),
         }
     }
 
-    fn bind_elem(&mut self) -> Result<Bind, ParseError> {
-        self.bind_atom()
+    fn ty_id(&mut self) -> ParseResult<TypeId> {
+        let ty = self.ty()?;
+        Ok(self.tree.types.push(ty))
     }
 
-    fn param_elem(&mut self) -> Result<ParamId, ParseError> {
-        let bind = self.bind_elem()?;
-        let ty = if let Colon = self.peek() {
+    fn expr_atom(&mut self) -> ParseResult<Expr> {
+        match self.peek() {
+            Ident => Ok(Expr::Name(self.next())), // Is this dead code?
+            Int => Ok(Expr::Int(self.next())),
+            Float => Ok(Expr::Float(self.next())),
+            LParen => {
+                self.next();
+                let inner = self.expr_id()?;
+                self.expect(RParen)?;
+                Ok(Expr::Paren(inner))
+            }
+            LBracket => {
+                let ty = self.ty_id()?;
+                let args = self.args()?;
+                Ok(Expr::New { ty, args })
+            }
+            _ => Err(self.err(Ident | Int | Float | LParen | LBracket)),
+        }
+    }
+
+    fn expr_factor(&mut self) -> ParseResult<Expr> {
+        let mut unops = Vec::new();
+        while let Minus = self.peek() {
             self.next();
-            Some(self.ty()?)
-        } else {
-            None
+            unops.push(Unop::Negative);
+        }
+        let mut expr = match self.peek() {
+            Ident => {
+                let name = self.next();
+                match self.peek() {
+                    LParen => {
+                        let args = self.args()?;
+                        Expr::Function { name, args }
+                    }
+                    _ => Expr::Name(name),
+                }
+            }
+            _ => self.expr_atom()?,
         };
-        Ok(self.tree.make_param(Param { bind, ty }))
-    }
-
-    fn param(&mut self) -> Result<ParamId, ParseError> {
-        let mut params = vec![self.param_elem()?];
-        while let Comma = self.peek() {
-            self.next();
-            params.push(self.param_elem()?);
-        }
-        let last = params
-            .pop()
-            .expect("every non-unit parameter should have at least one element");
-        Ok(params.into_iter().rfold(last, |snd, fst| {
-            self.tree.make_param(Param {
-                bind: Bind::Pair { fst, snd },
-                ty: None,
-            })
-        }))
-    }
-
-    fn expr_atom(&mut self) -> Result<ExprId, ParseError> {
-        match self.peek() {
-            LParen => {
-                let open = self.id;
-                // lambda and generics are the only places we peek after matching close bracket
-                let after = self.get(self.non_ws(self.after_close()));
-                self.next();
-                if let Colon | Arrow = after {
-                    let bind = if let RParen = self.peek() {
-                        let close = self.id;
-                        self.next();
-                        Bind::Unit { open, close }
-                    } else {
-                        let inner = self.param()?;
-                        self.expect(RParen)?;
-                        Bind::Paren { inner }
-                    };
-                    let param = self.tree.make_param(Param { bind, ty: None });
-                    let ty = if let Colon = self.peek() {
-                        self.next();
-                        Some(self.ty()?)
-                    } else {
-                        None
-                    };
-                    self.expect(Arrow)?;
-                    let body = self.expr()?;
-                    Ok(self.tree.make_expr(Expr::Lambda { param, ty, body }))
-                } else if let RParen = self.peek() {
-                    let close = self.id;
-                    self.next();
-                    Ok(self.tree.make_expr(Expr::Unit { open, close }))
-                } else {
-                    let inner = self.expr()?;
-                    self.expect(RParen)?;
-                    Ok(self.tree.make_expr(Expr::Paren { inner }))
-                }
-            }
-            LBrace => {
-                let open = self.id;
-                self.next();
-                let mut fields = vec![];
-                while let Ident = self.peek() {
-                    let name = self.id;
-                    self.next();
-                    let field = if let Equal = self.peek() {
-                        self.next();
-                        self.expr_elem()?
-                    } else {
-                        self.tree.make_expr(Expr::Name { name })
-                    };
-                    fields.push((name, field));
-                    match self.peek() {
-                        Comma => self.next(),
-                        _ => break,
-                    }
-                }
-                let close = self.expect(RBrace)?;
-                Ok(fields.into_iter().rfold(
-                    self.tree.make_expr(Expr::End { open, close }),
-                    |rest, (name, field)| self.tree.make_expr(Expr::Record { name, field, rest }),
-                ))
-            }
-            Ident => {
-                let name = self.id;
-                self.next();
-                if let Arrow = self.peek() {
-                    self.next();
-                    let bind = Bind::Name { name };
-                    let param = self.tree.make_param(Param { bind, ty: None });
-                    let ty = None;
-                    let body = self.expr()?;
-                    Ok(self.tree.make_expr(Expr::Lambda { param, ty, body }))
-                } else {
-                    Ok(self.tree.make_expr(Expr::Name { name }))
-                }
-            }
-            Undefined => {
-                let token = self.id;
-                self.next();
-                Ok(self.tree.make_expr(Expr::Undefined { token }))
-            }
-            Number => {
-                let val = self.id;
-                self.next();
-                Ok(self.tree.make_expr(Expr::Number { val }))
-            }
-            _ => Err(ParseError::Expected {
-                id: self.id,
-                kinds: LParen | LBrace | Ident | Undefined | Number,
-            }),
-        }
-    }
-
-    fn expr_access(&mut self) -> Result<ExprId, ParseError> {
-        let mut unops = vec![];
-        while let Dash = self.peek() {
-            self.next();
-            unops.push(Unop::Neg);
-        }
-        let mut expr = self.expr_atom()?;
         loop {
-            match self.peek() {
+            expr = match self.peek() {
                 LBracket => {
-                    // lambda and generics are the only places we peek after matching close bracket
-                    let after = self.get(self.after_close());
                     self.next();
-                    // same set of tokens allowed at the start of an atomic expression
-                    if let LParen | LBrace | Ident | Undefined | Number = after {
-                        while self.peek() != RBracket {
-                            let ty = self.ty()?;
-                            expr = self.tree.make_expr(Expr::Inst { val: expr, ty });
-                            match self.peek() {
-                                Comma => self.next(),
-                                _ => break,
-                            }
+                    let index = self.expr_id()?;
+                    match self.peek() {
+                        RBracket => {
+                            self.next();
+                            let vec = self.tree.exprs.push(expr);
+                            Expr::Vector { vec, index }
                         }
-                        self.expect(RBracket)?;
-                    } else {
-                        let index = self.expr()?;
-                        self.expect(RBracket)?;
-                        expr = self.tree.make_expr(Expr::Elem { array: expr, index });
+                        Comma => {
+                            self.next();
+                            let mat = self.tree.exprs.push(expr);
+                            let row = index;
+                            let col = self.expr_id()?;
+                            self.expect(RBracket)?;
+                            Expr::Matrix { mat, row, col }
+                        }
+                        _ => return Err(self.err(RBracket | Comma)),
                     }
                 }
                 Dot => {
                     self.next();
-                    self.expect(LParen)?;
-                    let arg = self.expr()?;
-                    self.expect(RParen)?;
-                    expr = self.tree.make_expr(Expr::Map { func: expr, arg });
+                    let obj = self.tree.exprs.push(expr);
+                    let name = self.expect(Ident)?;
+                    let args = self.args()?;
+                    Expr::Method { obj, name, args }
                 }
                 _ => break,
-            }
-        }
-        Ok(unops
-            .into_iter()
-            .rfold(expr, |arg, op| self.tree.make_expr(Expr::Unary { op, arg })))
-    }
-
-    fn expr_factor(&mut self) -> Result<ExprId, ParseError> {
-        let mut f = self.expr_access()?;
-        // function application is the only place we forbid line breaks
-        while !self.newline() {
-            // same set of tokens allowed at the start of an atomic expression
-            if let LParen | LBrace | Ident | Undefined | Number = self.peek() {
-                let x = self.expr_access()?;
-                f = self.tree.make_expr(Expr::Apply { func: f, arg: x });
-            } else {
-                break;
-            }
-        }
-        Ok(f)
-    }
-
-    fn expr_term(&mut self) -> Result<ExprId, ParseError> {
-        let mut lhs = self.expr_factor()?;
-        loop {
-            let op = match self.peek() {
-                Star => Binop::Mul,
-                Slash => Binop::Div,
-                DotStar => Binop::ElemMul,
-                DotSlash => Binop::ElemDiv,
-                _ => break,
             };
-            self.next();
-            let rhs = self.expr_factor()?;
-            lhs = self.tree.make_expr(Expr::Binary { lhs, op, rhs });
         }
-        Ok(lhs)
-    }
-
-    fn expr_elem(&mut self) -> Result<ExprId, ParseError> {
-        let mut lhs = self.expr_term()?;
-        loop {
-            let op = match self.peek() {
-                Plus => Binop::Add,
-                Dash => Binop::Sub,
-                _ => break,
-            };
-            self.next();
-            let rhs = self.expr_term()?;
-            lhs = self.tree.make_expr(Expr::Binary { lhs, op, rhs });
-        }
-        Ok(lhs)
-    }
-
-    fn expr_inner(&mut self) -> Result<ExprId, ParseError> {
-        let mut exprs = vec![self.expr_elem()?];
-        while let Comma = self.peek() {
-            self.next();
-            exprs.push(self.expr_elem()?);
-        }
-        let last = exprs
-            .pop()
-            .expect("every non-statement expression should have at least one element");
-        Ok(exprs.into_iter().rfold(last, |snd, fst| {
-            self.tree.make_expr(Expr::Pair { fst, snd })
+        Ok(unops.into_iter().rfold(expr, |expr, op| {
+            let arg = self.tree.exprs.push(expr);
+            Expr::Unary { op, arg }
         }))
     }
 
-    fn stmt(&mut self) -> Result<ExprId, ParseError> {
-        if !self.newline() {
-            self.expect(Semicolon)?;
-        }
-        self.expr()
+    fn expr_factor_id(&mut self) -> ParseResult<ExprId> {
+        let expr = self.expr_factor()?;
+        Ok(self.tree.exprs.push(expr))
     }
 
-    fn expr(&mut self) -> Result<ExprId, ParseError> {
-        match self.peek() {
-            Let => {
-                self.next();
-                let param = self.param()?;
-                self.expect(Equal)?;
-                let val = self.expr_inner()?;
-                let body = self.stmt()?;
-                Ok(self.tree.make_expr(Expr::Let { param, val, body }))
-            }
-            Index => {
-                self.next();
-                let name = self.expect(Ident)?;
-                self.expect(Gets)?;
-                let val = self.expr_inner()?;
-                let body = self.stmt()?;
-                Ok(self.tree.make_expr(Expr::Index { name, val, body }))
-            }
-            _ => self.expr_inner(),
-        }
-    }
-
-    fn import(&mut self) -> Result<Import, ParseError> {
-        self.expect(Import)?;
-        let module = self.expect(String)?;
-        self.expect(Use)?;
-        let mut names = vec![];
-        while let Ident = self.peek() {
-            names.push(self.id);
-            self.next();
-            match self.peek() {
-                Comma => self.next(),
+    fn expr_term(&mut self) -> ParseResult<Expr> {
+        let mut expr = self.expr_factor()?;
+        loop {
+            let op = match self.peek() {
+                Times => Binop::Multiply,
+                Divide => Binop::Divide,
                 _ => break,
-            }
+            };
+            self.next();
+            let lhs = self.tree.exprs.push(expr);
+            let rhs = self.expr_factor_id()?;
+            expr = Expr::Binary { lhs, op, rhs };
         }
-        Ok(Import { module, names })
+        Ok(expr)
     }
 
-    fn def(&mut self) -> Result<Def, ParseError> {
-        self.expect(Def)?;
-        let name = self.expect(Ident)?;
-        let mut types = vec![];
-        if let LBracket = self.peek() {
-            self.next();
-            while let Ident = self.peek() {
-                types.push(self.id);
-                self.next();
-                match self.peek() {
-                    Comma => self.next(),
-                    _ => break,
-                }
-            }
-            self.expect(RBracket)?;
-        }
-        let mut params = vec![];
-        while let LParen = self.peek() {
-            let open = self.id;
-            self.next();
-            let param = if let RParen = self.peek() {
-                let close = self.id;
-                self.next();
-                let bind = Bind::Unit { open, close };
-                self.tree.make_param(Param { bind, ty: None })
-            } else {
-                let param = self.param()?;
-                self.expect(RParen)?;
-                param
+    fn expr_term_id(&mut self) -> ParseResult<ExprId> {
+        let expr = self.expr_term()?;
+        Ok(self.tree.exprs.push(expr))
+    }
+
+    fn expr(&mut self) -> ParseResult<Expr> {
+        let mut expr = self.expr_term()?;
+        loop {
+            let op = match self.peek() {
+                Plus => Binop::Add,
+                Minus => Binop::Subtract,
+                _ => break,
             };
-            params.push(param);
-        }
-        let ty = if let Colon = self.peek() {
             self.next();
-            Some(self.ty()?)
-        } else {
-            None
+            let lhs = self.tree.exprs.push(expr);
+            let rhs = self.expr_term_id()?;
+            expr = Expr::Binary { lhs, op, rhs };
+        }
+        Ok(expr)
+    }
+
+    fn expr_id(&mut self) -> ParseResult<ExprId> {
+        let expr = self.expr()?;
+        Ok(self.tree.exprs.push(expr))
+    }
+
+    fn args(&mut self) -> ParseResult<IdRange<ArgId>> {
+        self.expect(LParen)?;
+        let mut args = IndexVec::new();
+        let start = self.tree.args.next_idx();
+        loop {
+            if let RParen = self.peek() {
+                self.next();
+                break;
+            }
+            let expr = self.expr()?;
+            let (name, expr) = match self.peek() {
+                Equals => match expr {
+                    Expr::Name(name) => {
+                        self.next();
+                        (Some(name), self.expr_id()?)
+                    }
+                    _ => return Err(self.err(Comma | LParen)),
+                },
+                _ => (None, self.tree.exprs.push(expr)),
+            };
+            args.push(Arg { name, expr });
+            if let Comma = self.peek() {
+                self.next();
+            }
+        }
+        self.tree.args.append(&mut args);
+        let end = self.tree.args.next_idx();
+        Ok(IdRange::new(start, end))
+    }
+
+    fn block(&mut self) -> ParseResult<Block> {
+        let mut stmts = IndexVec::new();
+        self.expect(LBrace)?;
+        let expr = loop {
+            let stmt = match self.peek() {
+                RBrace => break None,
+                Let => {
+                    self.next();
+                    let name = self.expect(Ident)?;
+                    self.expect(Equals)?;
+                    let rhs = self.expr_id()?;
+                    self.expect(Semicolon)?;
+                    Stmt::Let { name, rhs }
+                }
+                Var => {
+                    self.next();
+                    let name = self.expect(Ident)?;
+                    self.expect(Equals)?;
+                    let rhs = self.expr_id()?;
+                    self.expect(Semicolon)?;
+                    Stmt::Var { name, rhs }
+                }
+                For => {
+                    self.next();
+                    let name = self.expect(Ident)?;
+                    self.expect(In)?;
+                    let start = self.expr_id()?;
+                    self.expect(DotDot)?;
+                    let end = self.expr_id()?;
+                    let Block { mut stmts, expr } = self.block()?;
+                    assert!(expr.is_none()); // TODO
+                    let body_start = self.tree.stmts.next_idx();
+                    self.tree.stmts.append(&mut stmts);
+                    let body_end = self.tree.stmts.next_idx();
+                    Stmt::For {
+                        name,
+                        start,
+                        end,
+                        body: IdRange::new(body_start, body_end),
+                    }
+                }
+                _ => {
+                    let expr = self.expr()?;
+                    let kind = match self.peek() {
+                        RBrace => break Some(expr),
+                        Semicolon => {
+                            stmts.push(Stmt::Expr(self.tree.exprs.push(expr)));
+                            continue;
+                        }
+                        Equals => SetKind::Set,
+                        PlusEquals => SetKind::Add,
+                        MinusEquals => SetKind::Subtract,
+                        TimesEquals => SetKind::Multiply,
+                        DivideEquals => SetKind::Divide,
+                        _ => {
+                            return Err(self.err(
+                                Semicolon
+                                    | Equals
+                                    | PlusEquals
+                                    | MinusEquals
+                                    | TimesEquals
+                                    | DivideEquals
+                                    | RBrace,
+                            ));
+                        }
+                    };
+                    let lhs = match expr {
+                        Expr::Name(name) => Lhs::Name(name),
+                        Expr::Vector { vec, index } => Lhs::Vector { vec, index },
+                        Expr::Matrix { mat, row, col } => Lhs::Matrix { mat, row, col },
+                        _ => return Err(self.err(Semicolon | RBrace)),
+                    };
+                    self.next();
+                    let rhs = self.expr_id()?;
+                    self.expect(Semicolon)?;
+                    Stmt::Set { lhs, kind, rhs }
+                }
+            };
+            stmts.push(stmt);
         };
-        self.expect(Equal)?;
-        let body = self.expr()?;
-        Ok(Def {
-            name,
-            types,
-            params,
-            ty,
-            body,
+        self.expect(RBrace)?;
+        Ok(Block { stmts, expr })
+    }
+
+    fn signature(&mut self) -> ParseResult<Signature> {
+        self.expect(Func)?;
+        let name = self.expect(Ident)?;
+        self.expect(LParen)?;
+        let param_start = self.tree.params.next_idx();
+        loop {
+            if let RParen = self.peek() {
+                self.next();
+                break;
+            }
+            let name = self.expect(Ident)?;
+            self.expect(Colon)?;
+            let ty = self.ty_id()?;
+            self.tree.params.push(Param { name, ty });
+            if let Comma = self.peek() {
+                self.next();
+            }
+        }
+        let param_end = self.tree.params.next_idx();
+        let params = IdRange::new(param_start, param_end);
+        self.expect(Colon)?;
+        let ret = self.ty_id()?;
+        Ok(Signature { name, params, ret })
+    }
+
+    fn import(&mut self) -> ParseResult<Signature> {
+        self.expect(Import)?;
+        let sig = self.signature()?;
+        self.expect(Semicolon)?;
+        Ok(sig)
+    }
+
+    fn func(&mut self) -> ParseResult<Function> {
+        let sig = self.signature()?;
+        let Block { mut stmts, expr } = self.block()?;
+        let body_start = self.tree.stmts.next_idx();
+        self.tree.stmts.append(&mut stmts);
+        let body_end = self.tree.stmts.next_idx();
+        Ok(Function {
+            sig,
+            body: IdRange::new(body_start, body_end),
+            ret: expr.map(|ret| self.tree.exprs.push(ret)),
         })
     }
 
-    fn module(mut self) -> Result<Module, ParseError> {
+    fn module(mut self) -> ParseResult<Tree> {
         loop {
             match self.peek() {
                 Import => {
-                    let import = self.import()?;
-                    self.tree.imports.push(import);
+                    let ty = self.import()?;
+                    self.tree.imports.push(ty);
                 }
-                Def => {
-                    let def = self.def()?;
-                    self.tree.defs.push(def);
+                Func => {
+                    let func = self.func()?;
+                    self.tree.funcs.push(func);
                 }
                 Eof => return Ok(self.tree),
-                _ => {
-                    return Err(ParseError::Expected {
-                        id: self.id,
-                        kinds: Import | Def | Eof,
-                    })
-                }
+                _ => return Err(self.err(Import | Func | Eof)),
             }
         }
     }
 }
 
-fn close(open: TokenKind) -> TokenKind {
-    match open {
-        LParen => RParen,
-        LBracket => RBracket,
-        LBrace => RBrace,
-        _ => panic!("the {open} token is not an opening bracket"),
-    }
-}
-
-fn brackets(tokens: &Tokens) -> Result<Vec<TokenId>, ParseError> {
-    // there is always an EOF, hence always at least one token
-    let mut brackets: Vec<TokenId> = (0..=(tokens.len() - 1)
-        .try_into()
-        .expect("every token should have an index"))
-        .map(|index| TokenId { index })
-        .collect();
-    let mut id = TokenId { index: 0 };
-    let mut stack = vec![];
-    loop {
-        let Token { kind, .. } = tokens.get(id);
-        match kind {
-            Eof => break,
-            LParen | LBracket | LBrace => stack.push(id),
-            RParen | RBracket | RBrace => {
-                let open = stack.pop().ok_or(ParseError::Expected {
-                    id,
-                    kinds: EnumSet::only(Eof),
-                })?;
-                let expected = close(tokens.get(open).kind);
-                if tokens.get(id).kind != expected {
-                    return Err(ParseError::Expected {
-                        id,
-                        kinds: EnumSet::only(expected),
-                    });
-                }
-                brackets[open.to_usize()] = id;
-                brackets[id.to_usize()] = open;
-            }
-            _ => {}
-        }
-        id.index += 1;
-    }
-    match stack.pop() {
-        Some(open) => Err(ParseError::Expected {
-            id,
-            kinds: EnumSet::only(close(tokens.get(open).kind)),
-        }),
-        None => Ok(brackets),
-    }
-}
-
-pub fn parse(tokens: &Tokens) -> Result<Module, ParseError> {
-    let id = TokenId { index: 0 };
-    let mut parser = Parser {
-        tokens,
-        brackets: brackets(tokens)?,
-        before_ws: id,
-        id,
-        tree: Module {
-            imports: vec![],
-            types: vec![],
-            params: vec![],
-            exprs: vec![],
-            defs: vec![],
-        },
-    };
-    parser.find_non_ws();
-    parser.module()
+pub fn parse(tokens: &Tokens) -> Result<Tree, ParseError> {
+    let id = TokenId::from(0);
+    let tree = Tree::default();
+    Parser { tokens, id, tree }.module()
 }

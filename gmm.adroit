@@ -1,0 +1,79 @@
+import func multigammaln(p: Int, a: Float): Float;
+import func logsumexp(x: []Float): Float;
+
+func quadratic_form_element(
+  mu: []Float,
+  r: []Float,
+  l: []Float,
+  x: []Float,
+  i: Int,
+): Float {
+  let k = (i * (i - 1)) / 2;
+  var e = 0.0;
+  for j in 0..i {
+    e += l[k + j] * x[j];
+  }
+  e + r[i] * x[i]
+}
+
+func gmm(
+  D: Int,
+  K: Int,
+  N: Int,
+  x: [[]]Float,
+  m: Int,
+  gamma: Float,
+  alpha: []Float,
+  mu: [[]]Float,
+  q: [[]]Float,
+  l: [[]]Float,
+): Float {
+  let r = [[]]Float(K, D);
+  for k in 0..K {
+    for j in 0..D {
+      r[k, j] = q[k, j].exp();
+    }
+  }
+
+  var log_likelihood =
+    -N.float() * ((D.float() / 2.0) * (2.0 * pi).log() + logsumexp(alpha));
+  for i in 0..N {
+    let x_i = x.row(i);
+    let beta = []Float(K);
+    for k in 0..K {
+      let mu_k = mu.row(k);
+      let r_k = r.row(k);
+      let l_k = l.row(k);
+      var normsq = 0.0;
+      var sum = 0.0;
+      for j in 0..D {
+        let e = quadratic_form_element(mu=mu_k, r=r_k, l=l_k, x=x_i, i=j);
+        normsq += e.sqr();
+        sum += q[k, j];
+      }
+      beta[k] = alpha[k] - 0.5 * normsq + sum;
+    }
+    log_likelihood += logsumexp(beta);
+  }
+
+  var frobenius = 0.0;
+  var sum_q = 0.0;
+  for k in 0..K {
+    for j in 0..D {
+      let q_kj = q[k, j];
+      frobenius += q_kj.sqr();
+      sum_q += q_kj;
+    }
+    let s = l.cols();
+    for j in 0..s {
+      frobenius += l[k, j].sqr();
+    }
+  }
+  let n = D + m + 1;
+  let log_prior = K.float() * (
+    (n * D).float() * (gamma / (2.0).sqrt()).log()
+    - multigammaln(D, n.float() / 2.0)
+  ) + (gamma.sqr() / 2.0) * frobenius + m.float() * sum_q;
+
+  log_likelihood + log_prior
+}

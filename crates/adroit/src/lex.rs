@@ -1,56 +1,23 @@
 use std::{fmt, ops::Range};
 
 use enumset::EnumSetType;
+use index_vec::{IndexVec, define_index_type};
 use logos::Logos;
-use serde::Serialize;
 
-use crate::util::{u32_to_usize, Id};
-
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
-#[serde(transparent)]
-pub struct ByteIndex {
-    pub index: u32,
+define_index_type! {
+    pub struct ByteIndex = u32;
+    IMPL_RAW_CONVERSIONS = true;
 }
 
-impl Id for ByteIndex {
-    fn from_usize(n: usize) -> Option<Self> {
-        match n.try_into() {
-            Ok(index) => Some(Self { index }),
-            Err(_) => None,
-        }
-    }
-
-    fn to_usize(self) -> usize {
-        u32_to_usize(self.index)
-    }
+define_index_type! {
+    pub struct ByteLen = u16;
+    IMPL_RAW_CONVERSIONS = true;
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
-#[serde(transparent)]
-pub struct ByteLen {
-    pub len: u16,
-}
-
-impl Id for ByteLen {
-    fn from_usize(n: usize) -> Option<Self> {
-        match n.try_into() {
-            Ok(len) => Some(Self { len }),
-            Err(_) => None,
-        }
-    }
-
-    fn to_usize(self) -> usize {
-        self.len.into()
-    }
-}
-
-#[derive(Debug, EnumSetType, Hash, Logos, Serialize)]
-#[logos(skip r"[^\S\r\n]+")]
+#[derive(Debug, EnumSetType, Logos)]
+#[logos(skip r"\s+")]
 pub enum TokenKind {
     Eof,
-
-    #[regex("\r?\n")]
-    Newline,
 
     #[regex("#[^\n]*")]
     Comment,
@@ -58,11 +25,11 @@ pub enum TokenKind {
     #[regex(r"[A-Z_a-z]\w*")]
     Ident,
 
-    #[regex(r"\d+(\.\d+)?")]
-    Number,
+    #[regex(r"\d+")]
+    Int,
 
-    #[regex(r#""[^"]*""#)]
-    String,
+    #[regex(r"\d+\.\d+")]
+    Float,
 
     #[token("(")]
     LParen,
@@ -88,11 +55,14 @@ pub enum TokenKind {
     #[token(".")]
     Dot,
 
+    #[token("..")]
+    DotDot,
+
     #[token(":")]
     Colon,
 
     #[token("=")]
-    Equal,
+    Equals,
 
     #[token(";")]
     Semicolon,
@@ -101,51 +71,48 @@ pub enum TokenKind {
     Plus,
 
     #[token("-")]
-    Dash,
+    Minus,
 
     #[token("*")]
-    Star,
+    Times,
 
     #[token("/")]
-    Slash,
+    Divide,
 
-    #[token(".*")]
-    DotStar,
+    #[token("+=")]
+    PlusEquals,
 
-    #[token("./")]
-    DotSlash,
+    #[token("-=")]
+    MinusEquals,
 
-    #[token("->")]
-    To,
+    #[token("*=")]
+    TimesEquals,
 
-    #[token("=>")]
-    Arrow,
-
-    #[token("<-")]
-    Gets,
-
-    #[token("def")]
-    Def,
+    #[token("/=")]
+    DivideEquals,
 
     #[token("import")]
     Import,
 
-    #[token("index")]
-    Index,
+    #[token("func")]
+    Func,
 
     #[token("let")]
     Let,
 
-    #[token("undefined")]
-    Undefined,
+    #[token("var")]
+    Var,
 
-    #[token("use")]
-    Use,
+    #[token("for")]
+    For,
+
+    #[token("in")]
+    In,
 }
 
 impl TokenKind {
     pub fn ignore(self) -> bool {
-        matches!(self, Self::Newline | Self::Comment)
+        matches!(self, Self::Comment)
     }
 }
 
@@ -153,11 +120,10 @@ impl fmt::Display for TokenKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::Eof => write!(f, "end of file"),
-            Self::Newline => write!(f, "newline"),
             Self::Comment => write!(f, "comment"),
             Self::Ident => write!(f, "identifier"),
-            Self::Number => write!(f, "number"),
-            Self::String => write!(f, "string"),
+            Self::Int => write!(f, "integer"),
+            Self::Float => write!(f, "number"),
             Self::LParen => write!(f, "`(`"),
             Self::RParen => write!(f, "`)`"),
             Self::LBracket => write!(f, "`[`"),
@@ -166,29 +132,29 @@ impl fmt::Display for TokenKind {
             Self::RBrace => write!(f, "`}}`"),
             Self::Comma => write!(f, "`,`"),
             Self::Dot => write!(f, "`.`"),
+            Self::DotDot => write!(f, "`..`"),
             Self::Colon => write!(f, "`:`"),
-            Self::Equal => write!(f, "`=`"),
+            Self::Equals => write!(f, "`=`"),
             Self::Semicolon => write!(f, "`;`"),
             Self::Plus => write!(f, "`+`"),
-            Self::Dash => write!(f, "`-`"),
-            Self::Star => write!(f, "`*`"),
-            Self::Slash => write!(f, "`/`"),
-            Self::DotStar => write!(f, "`.*`"),
-            Self::DotSlash => write!(f, "`./`"),
-            Self::To => write!(f, "`->`"),
-            Self::Arrow => write!(f, "`=>`"),
-            Self::Gets => write!(f, "`<-`"),
-            Self::Def => write!(f, "`def`"),
+            Self::Minus => write!(f, "`-`"),
+            Self::Times => write!(f, "`*`"),
+            Self::Divide => write!(f, "`/`"),
+            Self::PlusEquals => write!(f, "`+=`"),
+            Self::MinusEquals => write!(f, "`-=`"),
+            Self::TimesEquals => write!(f, "`*=`"),
+            Self::DivideEquals => write!(f, "`/=`"),
             Self::Import => write!(f, "`import`"),
-            Self::Index => write!(f, "`index`"),
+            Self::Func => write!(f, "`func`"),
             Self::Let => write!(f, "`let`"),
-            Self::Undefined => write!(f, "`undefined`"),
-            Self::Use => write!(f, "`use`"),
+            Self::Var => write!(f, "`var`"),
+            Self::For => write!(f, "`for`"),
+            Self::In => write!(f, "`in`"),
         }
     }
 }
 
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug)]
 pub struct Token {
     pub start: ByteIndex,
     pub len: ByteLen,
@@ -197,51 +163,16 @@ pub struct Token {
 
 impl Token {
     pub fn byte_range(&self) -> Range<usize> {
-        let start = self.start.to_usize();
-        start..(start + self.len.to_usize())
-    }
-
-    pub fn string(&self, source: &str) -> String {
-        let kind = self.kind;
-        assert_eq!(kind, TokenKind::String, "the {kind} token is not a string");
-        serde_json::from_str(&source[self.byte_range()]).expect("strings should be valid JSON")
+        let start = self.start.index();
+        start..(start + self.len.index())
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
-#[serde(transparent)]
-pub struct TokenId {
-    pub index: u32,
+define_index_type! {
+    pub struct TokenId = u32;
 }
 
-impl Id for TokenId {
-    fn from_usize(n: usize) -> Option<Self> {
-        match n.try_into() {
-            Ok(index) => Some(Self { index }),
-            Err(_) => None,
-        }
-    }
-
-    fn to_usize(self) -> usize {
-        u32_to_usize(self.index)
-    }
-}
-
-#[derive(Debug, Serialize)]
-#[serde(transparent)]
-pub struct Tokens {
-    tokens: Vec<Token>,
-}
-
-impl Tokens {
-    pub fn len(&self) -> usize {
-        self.tokens.len()
-    }
-
-    pub fn get(&self, index: TokenId) -> Token {
-        self.tokens[index.to_usize()]
-    }
-}
+pub type Tokens = IndexVec<TokenId, Token>;
 
 #[derive(Debug)]
 pub enum LexError {
@@ -254,13 +185,13 @@ impl LexError {
     pub fn byte_range(&self) -> Range<usize> {
         match *self {
             LexError::SourceTooLong => {
-                let max = ByteIndex { index: u32::MAX }.to_usize();
+                let max = ByteIndex::from(u32::MAX).index();
                 max..max
             }
-            LexError::TokenTooLong { start, end } => start.to_usize()..end.to_usize(),
+            LexError::TokenTooLong { start, end } => start.index()..end.index(),
             LexError::InvalidToken { start, len } => {
-                let start = start.to_usize();
-                start..(start + len.to_usize())
+                let start = start.index();
+                start..(start + len.index())
             }
         }
     }
@@ -277,48 +208,23 @@ impl LexError {
 pub fn lex(source: &str) -> Result<Tokens, LexError> {
     let eof = match u32::try_from(source.len()) {
         Ok(len) => Token {
-            start: ByteIndex { index: len },
-            len: ByteLen { len: 0 },
+            start: ByteIndex::from(len),
+            len: ByteLen::from(0u16),
             kind: TokenKind::Eof,
         },
         Err(_) => return Err(LexError::SourceTooLong),
     };
-    let mut tokens = Vec::new();
+    let mut tokens = IndexVec::new();
     for (result, range) in TokenKind::lexer(source).spanned() {
-        let start = ByteIndex::from_usize(range.start)
-            .expect("file size limit should ensure all token starts are in range");
-        let end = ByteIndex::from_usize(range.end)
-            .expect("file size limit should ensure all token ends are in range");
-        let len = ByteLen {
-            len: (end.index - start.index)
-                .try_into()
+        let start = ByteIndex::from_usize(range.start);
+        let end = ByteIndex::from_usize(range.end);
+        let len = ByteLen::from(
+            u16::try_from(u32::from(end) - u32::from(start))
                 .map_err(|_| LexError::TokenTooLong { start, end })?,
-        };
+        );
         let kind = result.map_err(|_| LexError::InvalidToken { start, len })?;
         tokens.push(Token { start, len, kind });
     }
     tokens.push(eof);
-    Ok(Tokens { tokens })
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_crlf() {
-        let actual: Vec<TokenKind> = lex("a\r\nb")
-            .unwrap()
-            .tokens
-            .into_iter()
-            .map(|tok| tok.kind)
-            .collect();
-        let expected = vec![
-            TokenKind::Ident,
-            TokenKind::Newline,
-            TokenKind::Ident,
-            TokenKind::Eof,
-        ];
-        assert_eq!(actual, expected);
-    }
+    Ok(tokens)
 }

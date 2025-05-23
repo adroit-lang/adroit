@@ -1,9 +1,0 @@
-{
-  "name": "@adroit-lang/website",
-  "private": true,
-  "scripts": {
-    "build": "./build.ts",
-    "serve": "live-server dist --verbose",
-    "watch": "bun --watch run watch.ts"
-  }
-}

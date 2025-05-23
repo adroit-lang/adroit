@@ -1,11 +1,4 @@
 .DS_Store
-*.vsix
 /.direnv/
 /.envrc
-/packages/adroit-vscode/bin/
 /target/
-/vsix/
-dist/
-node_modules/
-out/
-tmp/

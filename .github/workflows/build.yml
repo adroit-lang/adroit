@@ -22,4 +22,5 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - run: cargo install --locked wasm-tools
       - run: cargo run gmm.adroit | wasm-tools print

@@ -25,9 +25,8 @@
           with pkgs;
           mkShell {
             buildInputs = [
-              bun
               nixfmt-rfc-style
-
+              wasm-tools
               (fenix.packages.${system}.stable.toolchain)
             ];
           };

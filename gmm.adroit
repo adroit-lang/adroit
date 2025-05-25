@@ -60,9 +60,8 @@ func gmm(
   var sum_q = 0.0;
   for k in 0..K {
     for j in 0..D {
-      let q_kj = q[k, j];
-      frobenius += q_kj.sqr();
-      sum_q += q_kj;
+      frobenius += r[k, j].sqr();
+      sum_q += q[k, j];
     }
     let s = l.cols();
     for j in 0..s {

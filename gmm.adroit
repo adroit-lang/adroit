@@ -11,9 +11,9 @@ func quadratic_form_element(
   let k = (i * (i - 1)) / 2;
   var e = 0.0;
   for j in 0..i {
-    e += l[k + j] * x[j];
+    e += l[k + j] * (x[j] - mu[j]);
   }
-  e + r[i] * x[i]
+  e + r[i] * (x[i] - mu[i])
 }
 
 func gmm(
@@ -72,7 +72,7 @@ func gmm(
   let log_prior = K.float() * (
     (n * D).float() * (gamma / (2.0).sqrt()).log()
     - multigammaln(D, n.float() / 2.0)
-  ) + (gamma.sqr() / 2.0) * frobenius + m.float() * sum_q;
+  ) - (gamma.sqr() / 2.0) * frobenius + m.float() * sum_q;
 
   log_likelihood + log_prior
 }

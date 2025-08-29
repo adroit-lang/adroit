@@ -87,25 +87,6 @@ impl Id for UnknownId {
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(transparent)]
-pub struct VarId {
-    pub index: u32,
-}
-
-impl Id for VarId {
-    fn from_usize(n: usize) -> Option<Self> {
-        match n.try_into() {
-            Ok(index) => Some(Self { index }),
-            Err(_) => None,
-        }
-    }
-
-    fn to_usize(self) -> usize {
-        u32_to_usize(self.index)
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
-#[serde(transparent)]
 pub struct ValId {
     pub index: u32,
 }

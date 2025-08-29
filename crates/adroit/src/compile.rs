@@ -22,7 +22,7 @@ pub struct FullModule<'a> {
 }
 
 pub trait Importer {
-    fn import(&self, id: typecheck::ImportId) -> FullModule;
+    fn import(&self, id: typecheck::ImportId) -> FullModule<'_>;
 }
 
 #[derive(Clone, Debug)]
@@ -32,7 +32,7 @@ pub struct GraphImporter<'a> {
 }
 
 impl Importer for GraphImporter<'_> {
-    fn import(&self, id: ImportId) -> FullModule {
+    fn import(&self, id: ImportId) -> FullModule<'_> {
         match &self.graph.get(&self.uris[id.to_usize()]).data {
             Data::Analyzed { syn, sem, errs } => {
                 assert!(errs.is_empty());
@@ -83,18 +83,18 @@ impl<'a, I: Clone + Importer> Printer<'a, I> {
         expr_range(self.full.tokens, self.full.tree, id).unwrap()
     }
 
-    pub fn ty(&self, id: typecheck::TypeId) -> Type<I> {
+    pub fn ty(&self, id: typecheck::TypeId) -> Type<'_, I> {
         Type {
             printer: self.clone(),
             id,
         }
     }
 
-    fn param_ty(&self, id: parse::ParamId) -> Type<I> {
+    fn param_ty(&self, id: parse::ParamId) -> Type<'_, I> {
         self.ty(self.full.module.val(self.full.module.param(id)).ty)
     }
 
-    fn expr_ty(&self, id: parse::ExprId) -> Type<I> {
+    fn expr_ty(&self, id: parse::ExprId) -> Type<'_, I> {
         self.ty(self.full.module.val(self.full.module.expr(id)).ty)
     }
 

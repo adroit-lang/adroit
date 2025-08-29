@@ -21,16 +21,14 @@
         pkgs = import nixpkgs { inherit system; };
       in
       {
-        devShell =
-          with pkgs;
-          mkShell {
-            buildInputs = [
-              bun
-              nixfmt-rfc-style
-
-              (fenix.packages.${system}.stable.toolchain)
-            ];
-          };
+        devShell = pkgs.mkShell {
+          buildInputs = [
+            pkgs.bun
+            pkgs.nixfmt
+            pkgs.nodejs # Used by vsce.
+            (fenix.packages.${system}.stable.toolchain)
+          ];
+        };
       }
     );
 }
